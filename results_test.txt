@@ -1,0 +1,25 @@
+------- TEST 3 - VOICE COMMANDS x OTHERS SIGNALS -------
+-------------------------- Testing with "ligar" and others signals
+----- Voice 1
+    0.9116
+    0.8849
+----- Voice 2
+    0.9216
+    0.8893
+----- Noise
+    0.8036
+    0.7625
+-------------------------- Testing with "desligar" and others signals
+----- Voice 1
+    0.9153
+    0.9089
+----- Voice 2
+    0.9283
+    0.9236
+----- Noise
+    0.7913
+    0.7751
+-------------------------- Testing with "ligar" and "ligar"
+    0.9075
+-------------------------- Testing with "desligar" and "desligar"
+    0.9285
