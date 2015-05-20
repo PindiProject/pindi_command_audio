@@ -15,9 +15,9 @@ while 1 == 1
 	stop(object_to_recorder);
 	command = get_voice_command(object_to_recorder.getaudiodata);
 	if command == 1
-		disp('LIGUEI');
+		disp('LIGAR');
 	elseif command == -1
-		disp('DESLIGUEI');
+		disp('DESLIGAR');
 	elseif command == 0
 		disp('Nenhum comando');
 	elseif command == 999
