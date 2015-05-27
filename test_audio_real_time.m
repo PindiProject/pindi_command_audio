@@ -8,7 +8,7 @@ while 1 == 1
 	time_diferential = 0;
 	time_final = 0;
 	record(object_to_recorder);
-	while time_diferential < 1.5 
+	while time_diferential < 2
 		time_final = clock;
 		time_diferential = etime(time_final, time_initial);
 	end
