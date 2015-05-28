@@ -99,6 +99,8 @@ float *get_fft(float *audio_signal){
 	float fft_audio[n];
 	for (l = 0; l < n; l++) {
 		fft_audio[l] = (float) sqrt(x[l] * x[l] + y[l] * y[l]);
+		// Adding log
+		fft_audio[l] = log(fft_audio[l]);
 		if (fft_audio[l] > max_fft_audio) {
 			max_fft_audio = fft_audio[l];
 		}
@@ -115,6 +117,43 @@ float *get_fft(float *audio_signal){
 	return fft_audio;
 }
 
+float calculate_mean(float *buffer){
+    //Calculating the mean array
+    int i;
+    float sum = 0;
+    for (i = 0; i < size_in_fft; ++i){
+        sum = sum + buffer[i];
+      //printf("\n%f\n",sum);
+    }
+    sum = sum/size_in_fft;
+    //printf("%f\n", sum);
+    return sum;
+}
+
+float calculate_covariance(float *bufferX, float *bufferY){
+    float meanX  = calculate_mean(bufferX);
+    float meanY  = calculate_mean(bufferY);
+    int i;
+    float covariance = 0;
+    for (i = 0; i < size_in_fft; ++i){
+        covariance = covariance + (bufferX[i] - meanX)*(bufferY[i] - meanY);
+    }
+    //printf("\n%f\n", covariance);
+    return covariance;
+}
+
+float calculate_correlation_pearson(float *bufferX, float *bufferY){
+    float standart_deviationX = sqrt(calculate_covariance(bufferX, bufferX));
+    //printf("\n%f\n", standart_deviationX);
+    float standart_deviationY = sqrt(calculate_covariance(bufferY, bufferY));
+    //printf("\n%f\n", standart_deviationY);
+    float correlation = calculate_covariance(bufferX, bufferY);
+    float normalization_part = standart_deviationX*standart_deviationY;
+    correlation = correlation/normalization_part;
+    //printf("\ncorrelation: %f\n", correlation);
+    return correlation;
+}
+
 int main(int argc, char *argv[]){
 	
 	char *audio_path = argv[1];
@@ -129,10 +168,12 @@ int main(int argc, char *argv[]){
     float *fft_audio = get_fft(buffer);
 
     // Printing contents of buffer
-    int i;
+    /*int i;
     for (i = 0; i < size_in_fft; ++i){
     	printf("%f\n", fft_audio[i]);
-    }
+    }*/
+
+    printf("\n%f\n", calculate_correlation_pearson(fft_audio, fft_audio));
 	  
 	return 0;
 }
