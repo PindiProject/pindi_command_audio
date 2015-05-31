@@ -140,6 +140,18 @@ float calculate_mean(Signal *buffer){
     return sum;
 }
 
+int get_length_min(Signal *signal_1, Signal *signal_2){
+	if (signal_1->size > signal_2->size){
+		return signal_2->size;
+	}
+	else if(signal_1->size < signal_2->size){
+		return signal_1->size;	
+	}
+	else{
+		return signal_1->size;	
+	}
+}
+
 float calculate_covariance(Signal *bufferX, Signal *bufferY){
     float meanX  = calculate_mean(bufferX);
     float meanY  = calculate_mean(bufferY);
@@ -167,7 +179,7 @@ float calculate_correlation_pearson(Signal *bufferX, Signal *bufferY){
 int main(int argc, char *argv[]){
 	
 	char *audio_path = argv[1];
-	Signal *signal_audio = get_audio_buffer(audio_path);
+	Signal *audio_signal = get_audio_buffer(audio_path);
 
     // Printing contents of buffer
     /*int i;
@@ -175,7 +187,7 @@ int main(int argc, char *argv[]){
     	printf("\n%f\n", signal_audio->data[i]);
     }*/
 
-    Signal *fft_audio = get_fft(signal_audio);
+    Signal *audio_fft = get_fft(audio_signal);
 
     // Printing contents of buffer
     /*int i;
@@ -185,8 +197,32 @@ int main(int argc, char *argv[]){
 
     //printf("%d\n", fft_audio->size);
 
-    printf("\n%f\n", calculate_correlation_pearson(fft_audio, fft_audio));
+    //printf("\n%f\n", calculate_correlation_pearson(fft_audio, fft_audio));
 
+    int length_min;
+    int i;
+	// --------------- PALMA --------------------
+	// Palma 1
+	Signal *signal_palma_1 = get_audio_buffer("../palmas/palma_2.wav");
+	
+	length_min = get_length_min(audio_signal, signal_palma_1);
+	signal_palma_1->size = length_min;
+	Signal *audio_signal_calc = (Signal *) malloc(sizeof(Signal));
+	audio_signal_calc->size = length_min;
+
+	float *buffer_a = (float *) malloc(length_min*sizeof(float));
+	float *buffer_b = (float *) malloc(length_min*sizeof(float));
+	for (i = 0; i < length_min; ++i){
+		buffer_a[i] = audio_signal->data[i];
+		buffer_b[i] = signal_palma_1->data[i];
+		printf("%f\n", buffer_a[i] - buffer_b[i]);
+	}
+	audio_signal_calc->data = buffer_a;
+	signal_palma_1->data = buffer_b;
+	Signal *cepstrum_palma_1 = get_fft(signal_palma_1);
+	Signal *cepstrum_audio_signal = get_fft(audio_signal_calc);
+	float palma_1 = calculate_correlation_pearson(cepstrum_palma_1, cepstrum_audio_signal);
+	printf("\n%f\n", palma_1);
 	  
 	return 0;
 }
