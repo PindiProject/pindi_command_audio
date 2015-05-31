@@ -10,27 +10,38 @@
 int size_buffer = sampling_rate*size_in_seconds;
 int size_in_fft;
 
-float *get_audio_buffer(char *audio_path){
+struct Signal {
+	int size;
+	float *data;
+};
+typedef struct Signal Signal;
+
+Signal *get_audio_buffer(char *audio_path){
 	// Opening file
 	SF_INFO info;
     SNDFILE *sf;
+    Signal *signal_audio = (Signal *) malloc(sizeof(Signal));
     sf = sf_open(audio_path, SFM_READ, &info);
+    signal_audio->size = info.frames;
     if (sf == NULL){
         printf("Failed to open the file.\n");
         exit(-1);
     }
 
     // Puting contents of file in array
-    float *buffer = (float *) malloc(size_buffer*sizeof(float));
-    sf_read_float(sf, buffer, size_buffer);
+    signal_audio->data = (float *) malloc(signal_audio->size*sizeof(float));
+    sf_read_float(sf, signal_audio->data, signal_audio->size);
     sf_close(sf);
-	return buffer;
+	return signal_audio;
 }
 
-float *get_fft(float *audio_signal){
-	int n = (int) pow(2, (int) (logf(size_buffer)/logf(2)));
-	size_in_fft = n;
-	int m = (int) (logf(size_buffer)/logf(2));
+Signal *get_fft(Signal *audio_signal){
+	Signal *fft_audio = (Signal *) malloc(sizeof(Signal));
+
+	int n = (int) pow(2, (int) (logf(audio_signal->size)/logf(2)));
+	fft_audio->size = n;
+	fft_audio->data = (float *) malloc(fft_audio->size*sizeof(float));
+	int m = (int) (logf(audio_signal->size)/logf(2));
 
 
 	float cosine[n / 2];
@@ -44,8 +55,8 @@ float *get_fft(float *audio_signal){
 	// FFT in real case
 	int j, k, n1, n2, a;
 	float c, s, t1, t2;
-	float *x = audio_signal;
-	float y[size_buffer];
+	float *x = audio_signal->data;
+	float *y = (float *) malloc(audio_signal->size*sizeof(float));
 
 	// Put zeros in imaginary part
 	int l;
@@ -96,13 +107,12 @@ float *get_fft(float *audio_signal){
 
 	// ABS(FFT)
 	float max_fft_audio = 0;
-	float fft_audio[n];
 	for (l = 0; l < n; l++) {
-		fft_audio[l] = (float) sqrt(x[l] * x[l] + y[l] * y[l]);
+		fft_audio->data[l] = (float) sqrt(x[l] * x[l] + y[l] * y[l]);
 		// Adding log
-		fft_audio[l] = log(fft_audio[l]);
-		if (fft_audio[l] > max_fft_audio) {
-			max_fft_audio = fft_audio[l];
+		fft_audio->data[l] = log(fft_audio->data[l]);
+		if (fft_audio->data[l] > max_fft_audio) {
+			max_fft_audio = fft_audio->data[l];
 		}
 	}
 
@@ -110,39 +120,39 @@ float *get_fft(float *audio_signal){
 
 	// Equalizing FFT
 	for (l = 0; l < n; l++) {
-		fft_audio[l] = fft_audio[l] / max_fft_audio;
+		fft_audio->data[l] = fft_audio->data[l] / max_fft_audio;
 		//printf("%f\n", fft_audio[l]);
 	}
 
 	return fft_audio;
 }
 
-float calculate_mean(float *buffer){
+float calculate_mean(Signal *buffer){
     //Calculating the mean array
     int i;
     float sum = 0;
-    for (i = 0; i < size_in_fft; ++i){
-        sum = sum + buffer[i];
+    for (i = 0; i < buffer->size; ++i){
+        sum = sum + buffer->data[i];
       //printf("\n%f\n",sum);
     }
-    sum = sum/size_in_fft;
+    sum = sum/buffer->size;
     //printf("%f\n", sum);
     return sum;
 }
 
-float calculate_covariance(float *bufferX, float *bufferY){
+float calculate_covariance(Signal *bufferX, Signal *bufferY){
     float meanX  = calculate_mean(bufferX);
     float meanY  = calculate_mean(bufferY);
     int i;
     float covariance = 0;
-    for (i = 0; i < size_in_fft; ++i){
-        covariance = covariance + (bufferX[i] - meanX)*(bufferY[i] - meanY);
+    for (i = 0; i < bufferX->size; ++i){
+        covariance = covariance + (bufferX->data[i] - meanX)*(bufferY->data[i] - meanY);
     }
     //printf("\n%f\n", covariance);
     return covariance;
 }
 
-float calculate_correlation_pearson(float *bufferX, float *bufferY){
+float calculate_correlation_pearson(Signal *bufferX, Signal *bufferY){
     float standart_deviationX = sqrt(calculate_covariance(bufferX, bufferX));
     //printf("\n%f\n", standart_deviationX);
     float standart_deviationY = sqrt(calculate_covariance(bufferY, bufferY));
@@ -157,23 +167,26 @@ float calculate_correlation_pearson(float *bufferX, float *bufferY){
 int main(int argc, char *argv[]){
 	
 	char *audio_path = argv[1];
-	float *buffer = get_audio_buffer(audio_path);
-
-    /*// Printing contents of buffer
-    int i;
-    for (i = 0; i < size_buffer; ++i){
-    	printf("\n%f\n", buffer[i]);
-    }*/
-
-    float *fft_audio = get_fft(buffer);
+	Signal *signal_audio = get_audio_buffer(audio_path);
 
     // Printing contents of buffer
     /*int i;
-    for (i = 0; i < size_in_fft; ++i){
-    	printf("%f\n", fft_audio[i]);
+    for (i = 0; i < signal_audio->size; ++i){
+    	printf("\n%f\n", signal_audio->data[i]);
     }*/
 
+    Signal *fft_audio = get_fft(signal_audio);
+
+    // Printing contents of buffer
+    /*int i;
+    for (i = 0; i < fft_audio->size; ++i){
+    	printf("%f\n", fft_audio->data[i]);
+    }*/
+
+    //printf("%d\n", fft_audio->size);
+
     printf("\n%f\n", calculate_correlation_pearson(fft_audio, fft_audio));
+
 	  
 	return 0;
 }
