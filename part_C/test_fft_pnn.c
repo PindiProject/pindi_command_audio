@@ -5,11 +5,6 @@
 #include <stdlib.h>
 #include <sndfile.h>
 
-#define sampling_rate 44100
-#define size_in_seconds 5
-int size_buffer = sampling_rate*size_in_seconds;
-int size_in_fft;
-
 struct Signal {
 	int size;
 	float *data;
