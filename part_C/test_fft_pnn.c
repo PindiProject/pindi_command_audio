@@ -140,16 +140,30 @@ float calculate_mean(Signal *buffer){
     return sum;
 }
 
-int get_length_min(Signal *signal_1, Signal *signal_2){
+void get_length_min(Signal *signal_1, Signal *signal_2){
+	int length_min;
 	if (signal_1->size > signal_2->size){
-		return signal_2->size;
+		length_min = signal_2->size;
 	}
 	else if(signal_1->size < signal_2->size){
-		return signal_1->size;	
+		length_min = signal_1->size;	
 	}
 	else{
-		return signal_1->size;	
+		length_min = signal_1->size;	
 	}
+	signal_1->size = length_min;
+	signal_2->size = length_min;
+	float *buffer_a = (float *) malloc(length_min*sizeof(float));
+	float *buffer_b = (float *) malloc(length_min*sizeof(float));
+	int i;
+	for (i = 0; i < length_min; ++i){
+		buffer_a[i] = signal_1->data[i];
+		buffer_b[i] = signal_2->data[i];
+	}
+	free(signal_1->data);
+	free(signal_2->data);
+	signal_1->data = buffer_a;
+	signal_2->data = buffer_b;
 }
 
 float calculate_covariance(Signal *bufferX, Signal *bufferY){
@@ -176,18 +190,33 @@ float calculate_correlation_pearson(Signal *bufferX, Signal *bufferY){
     return correlation;
 }
 
+float test_signals(char *path_signal_1, char *path_signal_2){
+	Signal *signal_1 = get_audio_buffer(path_signal_1);
+	Signal *signal_2 = get_audio_buffer(path_signal_2);
+	get_length_min(signal_1, signal_2);
+	Signal *cepstrum_signal_1 = get_fft(signal_1);
+	free(signal_1);
+	Signal *cepstrum_signal_2 = get_fft(signal_2);
+	free(signal_2);
+	float test = calculate_correlation_pearson(cepstrum_signal_1, cepstrum_signal_2);
+	free(cepstrum_signal_1);
+	free(cepstrum_signal_2);
+	return test;
+
+}
+
 int main(int argc, char *argv[]){
 	
 	char *audio_path = argv[1];
-	Signal *audio_signal = get_audio_buffer(audio_path);
+	/*Signal *audio_signal = get_audio_buffer(audio_path);*/
 
     // Printing contents of buffer
     /*int i;
-    for (i = 0; i < signal_audio->size; ++i){
-    	printf("\n%f\n", signal_audio->data[i]);
+    for (i = 0; i < 10; ++i){
+    	printf("%f\n", audio_signal->data[i]);
     }*/
 
-    Signal *audio_fft = get_fft(audio_signal);
+    //Signal *audio_fft = get_fft(audio_signal);
 
     // Printing contents of buffer
     /*int i;
@@ -199,30 +228,58 @@ int main(int argc, char *argv[]){
 
     //printf("\n%f\n", calculate_correlation_pearson(fft_audio, fft_audio));
 
-    int length_min;
-    int i;
-	// --------------- PALMA --------------------
+	// --------------- TESTE PALMA --------------------
 	// Palma 1
-	Signal *signal_palma_1 = get_audio_buffer("../palmas/palma_2.wav");
-	
-	length_min = get_length_min(audio_signal, signal_palma_1);
-	signal_palma_1->size = length_min;
-	Signal *audio_signal_calc = (Signal *) malloc(sizeof(Signal));
-	audio_signal_calc->size = length_min;
+	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../palmas/palma_2.wav"));
+	// Palma 2
+	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../palmas/palma_4.wav"));
+	// --------------- ESTALO --------------------
+	// Estalo 1
+	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../palmas/palma_3.wav"));
+	// Estalo 2
+	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../palmas/estalo_2.wav"));
+	// --------------- RUIDO --------------------
+	// Ruido 1
+	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_2.wav"));
+	// Ruido 2
+	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_4.wav"));
+	// Ruido 3
+	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_8.wav"));
+	// Ruido 4
+	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_9.wav"));
+	// Ruido 5
+	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_10.wav"));
+	// Ruido 6
+	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_11.wav"));
+	// Ruido 7
+	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_12.wav"));
 
-	float *buffer_a = (float *) malloc(length_min*sizeof(float));
-	float *buffer_b = (float *) malloc(length_min*sizeof(float));
-	for (i = 0; i < length_min; ++i){
-		buffer_a[i] = audio_signal->data[i];
-		buffer_b[i] = signal_palma_1->data[i];
-		printf("%f\n", buffer_a[i] - buffer_b[i]);
-	}
-	audio_signal_calc->data = buffer_a;
-	signal_palma_1->data = buffer_b;
-	Signal *cepstrum_palma_1 = get_fft(signal_palma_1);
-	Signal *cepstrum_audio_signal = get_fft(audio_signal_calc);
-	float palma_1 = calculate_correlation_pearson(cepstrum_palma_1, cepstrum_audio_signal);
-	printf("\n%f\n", palma_1);
-	  
+	printf("%s\n","---------------------------------");
+	// --------------- TESTE ESTALO --------------------
+	// Palma 1
+	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../palmas/palma_2.wav"));
+	// Palma 2
+	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../palmas/palma_4.wav"));
+	// --------------- ESTALO --------------------
+	// Estalo 1
+	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../palmas/palma_3.wav"));
+	// Estalo 2
+	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../palmas/estalo_2.wav"));
+	// --------------- RUIDO --------------------
+	// Ruido 1
+	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_2.wav"));
+	// Ruido 2
+	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_4.wav"));
+	// Ruido 3
+	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_8.wav"));
+	// Ruido 4
+	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_9.wav"));
+	// Ruido 5
+	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_10.wav"));
+	// Ruido 6
+	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_11.wav"));
+	// Ruido 7
+	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_12.wav"));
+
 	return 0;
 }
