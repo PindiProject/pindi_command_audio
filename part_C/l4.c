@@ -240,8 +240,14 @@ int main() {
   snd_pcm_uframes_t frames;
   float *buffer;
   int *float_buf;
-  float seconds = 5;
+  float seconds = 0.0002;
   int size = seconds*44100;
+  Signal *signal_audio;
+  float correlation_440;
+  float *correlation_turn;
+  float *correlation_do_nothing;
+  int flag_turn = -1;
+  int flag_old = 1;
 
   /* Open PCM device for recording (capture). */
   rc = snd_pcm_open(&handle, "default",
@@ -295,27 +301,110 @@ int main() {
   /* We want to loop for 5 seconds */
   snd_pcm_hw_params_get_period_time(params, &val, &dir);
 
-  rc = snd_pcm_readi(handle, buffer, size);
-  if (rc == -EPIPE) {
-    /* EPIPE means overrun */
-    //fprintf(stderr, "overrun occurred\n");
-    snd_pcm_prepare(handle);
-  } else if (rc < 0) {
-    //fprintf(stderr, "error from read: %s\n", snd_strerror(rc));
-  } else if (rc != (int)frames) {
-    //fprintf(stderr, "short read, read %d frames\n", rc);
+  while(1){
+    rc = snd_pcm_readi(handle, buffer, size);
+    if (rc == -EPIPE) {
+      /* EPIPE means overrun */
+      //fprintf(stderr, "overrun occurred\n");
+      snd_pcm_prepare(handle);
+    } else if (rc < 0) {
+      //fprintf(stderr, "error from read: %s\n", snd_strerror(rc));
+    } else if (rc != (int)frames) {
+      //fprintf(stderr, "short read, read %d frames\n", rc);
+    }
+
+    signal_audio = (Signal *) malloc(sizeof(Signal));
+    signal_audio->size = size;
+    signal_audio->data = (float *) malloc(size*sizeof(float));
+    int i;
+    float sum_energy = 0;
+    for (i = 0; i < size; ++i){
+      /*if (i+1 < size){
+        signal_audio->data[i] = (buffer[i] + buffer[i+1])/2;
+      }
+      else{
+        signal_audio->data[i] = buffer[i];
+      }*/
+      sum_energy = sum_energy + sqrt(buffer[i]*buffer[i]);
+    }
+
+    //printf("%f\n", sum_energy);
+    if (sum_energy > 5.0){
+      flag_turn = flag_turn*(-1);
+      if (flag_turn == 1){
+          printf("%s\n", "YEAH YEAH to ligado");
+        }else if (flag_turn == -1){
+          printf("%s\n", "Ráa to desligado");
+        }
+    }
+
+    /*printf("\n440: %f\n", test_signals(signal_audio, get_audio_buffer("440.wav")));
+    printf("\npalma 1: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/palma_1.wav")));
+    printf("\npalma 2: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/palma_2.wav")));
+    printf("\npalma 3: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/palma_4.wav")));
+    printf("\nestalo 1: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/palma_3.wav")));
+    printf("\nestalo 2: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/estalo_2.wav")));
+    printf("\nestalo 3: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/estalo_3.wav")));
+    printf("%s\n", "------ RUIDOS");
+    printf("\nruido 1: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_2.wav")));
+    printf("\nruido 2: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_4.wav")));
+    printf("\nruido 3: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_8.wav")));
+    printf("\nruido 4: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_9.wav")));
+    printf("\nruido 5: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_10.wav")));*/
+
+    /*correlation_440 = test_signals(signal_audio, get_audio_buffer("440.wav"));
+
+    correlation_turn = (float *) malloc(6*sizeof(float));
+    correlation_turn[0] = test_signals(signal_audio, get_audio_buffer("../palmas/palma_1.wav"));
+    correlation_turn[1] = test_signals(signal_audio, get_audio_buffer("../palmas/palma_4.wav"));  
+    correlation_turn[2] = test_signals(signal_audio, get_audio_buffer("../palmas/palma_4.wav"));
+    correlation_turn[3] = test_signals(signal_audio, get_audio_buffer("../palmas/palma_4.wav"));
+    correlation_turn[4] = test_signals(signal_audio, get_audio_buffer("../palmas/palma_4.wav"));
+    correlation_turn[5] = test_signals(signal_audio, get_audio_buffer("../palmas/palma_4.wav"));
+
+    correlation_do_nothing = (float *) malloc(6*sizeof(float));
+    correlation_do_nothing[0] = test_signals(signal_audio, get_audio_buffer("../pindi_noise_2.wav"));
+    correlation_do_nothing[1] = test_signals(signal_audio, get_audio_buffer("../pindi_noise_4.wav"));
+    correlation_do_nothing[2] = test_signals(signal_audio, get_audio_buffer("../pindi_noise_8.wav"));
+    correlation_do_nothing[3] = test_signals(signal_audio, get_audio_buffer("../pindi_noise_9.wav"));
+    correlation_do_nothing[4] = test_signals(signal_audio, get_audio_buffer("../pindi_noise_10.wav"));*/
+
+    /*float max_turn = 0;
+    float max_do_nothing = 0;
+    for (i = 0; i < 6; ++i){
+      if (max_turn < correlation_turn[i]){
+        max_turn = correlation_turn[i];
+      }
+      if (max_do_nothing < correlation_do_nothing[i]){
+        max_do_nothing = correlation_do_nothing[i];
+      }
+    }*/
+
+    /*if (correlation_440 > max_turn && correlation_440 > max_do_nothing){
+      printf("%s\n", "440 para teste");
+    }
+    else if (max_turn > correlation_440 && max_turn > max_do_nothing){
+      printf("%s\n", "YEAH YEAH liguei! - Palma!");
+    }
+    else if (max_do_nothing > max_turn && max_do_nothing > correlation_440){
+      printf("%s\n", "Rá fiz nada! - Ruído!");
+    }*/
+
+  /*  if (max_turn > max_do_nothing){
+      printf("%s %f %f\n", "Palma!", max_turn, max_do_nothing);
+    }
+    else if (max_do_nothing > max_turn){
+      printf("%s %f %f\n", "Ruído!", max_turn, max_do_nothing);
+    }*/
+    //free(signal_audio);
+    //free(buffer);
+
   }
 
   snd_pcm_drain(handle);
   snd_pcm_close(handle);
 
-  Signal *signal_audio = (Signal *) malloc(sizeof(Signal));
-  signal_audio->size = size;
-  signal_audio->data = (float *) malloc(size*sizeof(float));
-  int i;
-  for (i = 0; i < size; ++i){
-    signal_audio->data[i] = buffer[i];
-  }
+  
 
   //Signal *audio_fft = get_fft(signal_audio);
 
@@ -338,20 +427,6 @@ int main() {
   float test_1 = calculate_covariance(signal_audio, signal_audio);
   float test_2 = calculate_covariance(s1, s1);
   printf("%f %f %f\n", test_1, test_2, test);*/
-
-  printf("\n440: %f\n", test_signals(signal_audio, get_audio_buffer("440.wav")));
-  printf("\npalma 1: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/palma_1.wav")));
-  printf("\npalma 2: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/palma_2.wav")));
-  printf("\npalma 3: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/palma_4.wav")));
-  printf("\nestalo 1: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/palma_3.wav")));
-  printf("\nestalo 2: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/estalo_2.wav")));
-  printf("\nestalo 3: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/estalo_3.wav")));
-  printf("%s\n", "------ RUIDOS");
-  printf("\nruido 1: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_2.wav")));
-  printf("\nruido 2: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_4.wav")));
-  printf("\nruido 3: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_8.wav")));
-  printf("\nruido 4: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_9.wav")));
-  printf("\nruido 5: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_10.wav")));
 
   return 0;
 }
