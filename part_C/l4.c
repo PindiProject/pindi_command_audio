@@ -233,7 +233,6 @@ float test_signals(Signal *signal_1, Signal *signal_2){
 int main() {
   long loops;
   int rc;
-  int size;
   snd_pcm_t *handle;
   snd_pcm_hw_params_t *params;
   unsigned int val;
@@ -241,6 +240,8 @@ int main() {
   snd_pcm_uframes_t frames;
   float *buffer;
   int *float_buf;
+  float seconds = 5;
+  int size = seconds*44100;
 
   /* Open PCM device for recording (capture). */
   rc = snd_pcm_open(&handle, "default",
@@ -267,7 +268,7 @@ int main() {
   /* Signed 16-bit little-endian format */
   snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_FLOAT);
 
-  /* Two channels (stereo) */
+  /* One channels (mono) */
   snd_pcm_hw_params_set_channels(handle, params, 1);
 
   /* 44100 bits/second sampling rate (CD quality) */
@@ -283,30 +284,18 @@ int main() {
   /* Write the parameters to the driver */
   rc = snd_pcm_hw_params(handle, params);
   if (rc < 0) {
-    fprintf(stderr,
-            "unable to set hw parameters: %s\n",
-            snd_strerror(rc));
+    fprintf(stderr, "unable to set hw parameters: %s\n", snd_strerror(rc));
     exit(1);
   }
 
   /* Use a buffer large enough to hold one period */
-  snd_pcm_hw_params_get_period_size(params,
-                                      &frames, &dir);
-  size = frames * 2; /* 2 bytes/sample, 2 channels */
-  buffer = (float *) malloc(44100*5*sizeof(float));
-  float_buf = (int *) malloc(size);
+  snd_pcm_hw_params_get_period_size(params, &frames, &dir);
+  buffer = (float *) malloc(size*sizeof(float));
 
   /* We want to loop for 5 seconds */
-  snd_pcm_hw_params_get_period_time(params,
-                                         &val, &dir);
-  loops = 5000000 / val;
-  int size_final = loops*frames;
-  int total_buffer[size_final]; 
-  //printf("%d %d\n", loops, frames);
+  snd_pcm_hw_params_get_period_time(params, &val, &dir);
 
-  int slot_buffer_float = 0;
-
-  rc = snd_pcm_readi(handle, buffer, 44100*5);
+  rc = snd_pcm_readi(handle, buffer, size);
   if (rc == -EPIPE) {
     /* EPIPE means overrun */
     //fprintf(stderr, "overrun occurred\n");
@@ -316,16 +305,15 @@ int main() {
   } else if (rc != (int)frames) {
     //fprintf(stderr, "short read, read %d frames\n", rc);
   }
-  //rc = write(1, buffer, size);
 
   snd_pcm_drain(handle);
   snd_pcm_close(handle);
 
   Signal *signal_audio = (Signal *) malloc(sizeof(Signal));
-  signal_audio->size = size_final;
-  signal_audio->data = (float *) malloc(44100*5*sizeof(float));
+  signal_audio->size = size;
+  signal_audio->data = (float *) malloc(size*sizeof(float));
   int i;
-  for (i = 0; i < 44100*5; ++i){
+  for (i = 0; i < size; ++i){
     signal_audio->data[i] = buffer[i];
   }
 
