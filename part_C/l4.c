@@ -15,6 +15,7 @@ and writes to standard output for 5 seconds of data.
 #include <math.h>
 #include <stdlib.h>
 #include <sndfile.h>
+#include <string.h>
 
 struct Signal {
   int size;
@@ -25,19 +26,19 @@ typedef struct Signal Signal;
 Signal *get_audio_buffer(char *audio_path){
   // Opening file
   SF_INFO info;
-    SNDFILE *sf;
-    Signal *signal_audio = (Signal *) malloc(sizeof(Signal));
-    sf = sf_open(audio_path, SFM_READ, &info);
-    signal_audio->size = info.frames;
-    if (sf == NULL){
-        printf("Failed to open the file.\n");
-        exit(-1);
-    }
+  SNDFILE *sf;
+  Signal *signal_audio = (Signal *) malloc(sizeof(Signal));
+  sf = sf_open(audio_path, SFM_READ, &info);
+  signal_audio->size = info.frames;
+  if (sf == NULL){
+      printf("Failed to open the file.\n");
+      exit(-1);
+  }
 
-    // Puting contents of file in array
-    signal_audio->data = (float *) malloc(signal_audio->size*sizeof(float));
-    sf_read_float(sf, signal_audio->data, signal_audio->size);
-    sf_close(sf);
+  // Puting contents of file in array
+  signal_audio->data = (float *) malloc(signal_audio->size*sizeof(float));
+  sf_read_float(sf, signal_audio->data, signal_audio->size);
+  sf_close(sf);
   return signal_audio;
 }
 
@@ -62,7 +63,9 @@ Signal *get_fft(Signal *audio_signal){
   // FFT in real case
   int j, k, n1, n2, a;
   float c, s, t1, t2;
-  float *x = audio_signal->data;
+
+  float *x = (float *) malloc(audio_signal->size*sizeof(float));
+  memcpy(x, audio_signal->data, audio_signal->size);
   float *y = (float *) malloc(audio_signal->size*sizeof(float));
 
   // Put zeros in imaginary part
@@ -117,7 +120,7 @@ Signal *get_fft(Signal *audio_signal){
   for (l = 0; l < n; l++) {
     fft_audio->data[l] = (float) sqrt(x[l] * x[l] + y[l] * y[l]);
     // Adding log
-    fft_audio->data[l] = log(fft_audio->data[l]);
+    fft_audio->data[l] = logf(fft_audio->data[l]);
     if (fft_audio->data[l] > max_fft_audio) {
       max_fft_audio = fft_audio->data[l];
     }
@@ -136,6 +139,7 @@ Signal *get_fft(Signal *audio_signal){
 
 float calculate_mean(Signal *buffer){
     //Calculating the mean array
+    //printf("%d\n", buffer->size);
     int i;
     float sum = 0;
     for (i = 0; i < buffer->size; ++i){
@@ -148,6 +152,9 @@ float calculate_mean(Signal *buffer){
 }
 
 void get_length_min(Signal *signal_1, Signal *signal_2){
+  /*float *x = (float *) malloc(audio_signal->size*sizeof(float));
+  memcpy(x, audio_signal->data, audio_signal->size);*/
+
   int length_min;
   if (signal_1->size > signal_2->size){
     length_min = signal_2->size;
@@ -167,8 +174,8 @@ void get_length_min(Signal *signal_1, Signal *signal_2){
     buffer_a[i] = signal_1->data[i];
     buffer_b[i] = signal_2->data[i];
   }
-  free(signal_1->data);
-  free(signal_2->data);
+  //free(signal_1->data);
+  //free(signal_2->data);
   signal_1->data = buffer_a;
   signal_2->data = buffer_b;
 }
@@ -192,23 +199,35 @@ float calculate_correlation_pearson(Signal *bufferX, Signal *bufferY){
     //printf("\n%f\n", standart_deviationY);
     float correlation = calculate_covariance(bufferX, bufferY);
     float normalization_part = standart_deviationX*standart_deviationY;
-    correlation = correlation/normalization_part;
+    correlation = (correlation*100)/normalization_part;
     //printf("\ncorrelation: %f\n", correlation);
     return correlation;
 }
 
 float test_signals(Signal *signal_1, Signal *signal_2){
-  get_length_min(signal_1, signal_2);
-  Signal *cepstrum_signal_1 = get_fft(signal_1);
-  //free(signal_1);
-  Signal *cepstrum_signal_2 = get_fft(signal_2);
-  free(signal_2);
+  Signal *signal_1_1 = (Signal *) malloc(sizeof(Signal));
+  float *s_1 = (float *) malloc(signal_1->size*sizeof(float));
+  memcpy(s_1, signal_1->data, signal_1->size);
+  signal_1_1->data = s_1;
+  signal_1_1->size = signal_1->size;
+
+  Signal *signal_2_2 = (Signal *) malloc(sizeof(Signal));
+  float *s_2 = (float *) malloc(signal_2->size*sizeof(float));
+  memcpy(s_2, signal_2->data, signal_2->size);
+  signal_2_2->data = s_2;
+  signal_2_2->size = signal_2->size;
+
+
+  get_length_min(signal_1_1, signal_2_2);
+  Signal *cepstrum_signal_1 = get_fft(signal_1_1);
+  free(signal_1_1);
+  Signal *cepstrum_signal_2 = get_fft(signal_2_2);
+  free(signal_2_2);
   float test = calculate_correlation_pearson(cepstrum_signal_1, cepstrum_signal_2);
   test = sqrt(test*test);
   free(cepstrum_signal_1);
   free(cepstrum_signal_2);
   return test;
-
 }
 
 int main() {
@@ -220,7 +239,7 @@ int main() {
   unsigned int val;
   int dir;
   snd_pcm_uframes_t frames;
-  char *buffer;
+  float *buffer;
   int *float_buf;
 
   /* Open PCM device for recording (capture). */
@@ -246,8 +265,7 @@ int main() {
                       SND_PCM_ACCESS_RW_INTERLEAVED);
 
   /* Signed 16-bit little-endian format */
-  snd_pcm_hw_params_set_format(handle, params,
-                              SND_PCM_FORMAT_S16_LE);
+  snd_pcm_hw_params_set_format(handle, params, SND_PCM_FORMAT_FLOAT);
 
   /* Two channels (stereo) */
   snd_pcm_hw_params_set_channels(handle, params, 1);
@@ -275,7 +293,7 @@ int main() {
   snd_pcm_hw_params_get_period_size(params,
                                       &frames, &dir);
   size = frames * 2; /* 2 bytes/sample, 2 channels */
-  buffer = (char *) malloc(size);
+  buffer = (float *) malloc(44100*5*sizeof(float));
   float_buf = (int *) malloc(size);
 
   /* We want to loop for 5 seconds */
@@ -287,55 +305,53 @@ int main() {
   //printf("%d %d\n", loops, frames);
 
   int slot_buffer_float = 0;
-  while (loops > 0) {
-    loops--;
-    rc = snd_pcm_readi(handle, buffer, frames);
-    if (rc == -EPIPE) {
-      /* EPIPE means overrun */
-      //fprintf(stderr, "overrun occurred\n");
-      snd_pcm_prepare(handle);
-    } else if (rc < 0) {
-      //fprintf(stderr, "error from read: %s\n", snd_strerror(rc));
-    } else if (rc != (int)frames) {
-      //fprintf(stderr, "short read, read %d frames\n", rc);
-    }
-    //rc = write(1, buffer, size);
-    int i;
-    for (i = 0; i < frames; ++i){
-      //printf("%d\n", (int) buffer[i*2] | (buffer[i*2+1] << 8)); 
-      //printf("%d\n", buffer[i*2] | (buffer[i*2+1] << 8)); 
-      total_buffer[slot_buffer_float] = (int) buffer[i*2] | (buffer[i*2+1] << 8);
-      slot_buffer_float++;
-    }
+
+  rc = snd_pcm_readi(handle, buffer, 44100*5);
+  if (rc == -EPIPE) {
+    /* EPIPE means overrun */
+    //fprintf(stderr, "overrun occurred\n");
+    snd_pcm_prepare(handle);
+  } else if (rc < 0) {
+    //fprintf(stderr, "error from read: %s\n", snd_strerror(rc));
+  } else if (rc != (int)frames) {
+    //fprintf(stderr, "short read, read %d frames\n", rc);
   }
+  //rc = write(1, buffer, size);
 
   snd_pcm_drain(handle);
   snd_pcm_close(handle);
-  free(buffer);
-
-  int i;
-  int max_value = 0;
-  for (i = 0; i < size_final; ++i){
-    if (sqrt(total_buffer[i]*total_buffer[i]) > max_value){
-      max_value = sqrt(total_buffer[i]*total_buffer[i]);
-    }
-  }
-
-  float float_buffer[size_final];
-  for (i = 0; i < size_final; ++i){
-    float_buffer[i] = (float) total_buffer[i]/max_value;
-    //printf("%f\n", float_buffer[size_final]);
-  }
 
   Signal *signal_audio = (Signal *) malloc(sizeof(Signal));
   signal_audio->size = size_final;
-  signal_audio->data = (float *) malloc(size_final*sizeof(float));
-  for (i = 0; i < signal_audio->size; ++i){
-    signal_audio->data[i] = float_buffer[i];
+  signal_audio->data = (float *) malloc(44100*5*sizeof(float));
+  int i;
+  for (i = 0; i < 44100*5; ++i){
+    signal_audio->data[i] = buffer[i];
   }
-  Signal *audio_fft = get_fft(signal_audio);
 
-  printf("%s\n", "------ PALMAS e ESTALOS");
+  //Signal *audio_fft = get_fft(signal_audio);
+
+  //printf("%d\n", audio_fft->size);
+  //for (i = 0; i < audio_fft->size; ++i){
+    //printf("%f\n",audio_fft->data[i]);
+  //}
+
+  //printf("%s\n", "------ PALMAS e ESTALOS");
+  //printf("\n440: %f\n", test_signals(signal_audio, get_audio_buffer("440.wav")));
+
+  
+  //float c = calculate_covariance(get_audio_buffer("440_rt_2.wav"), get_audio_buffer("440_rt_2.wav"));
+  //printf("%f\n", c);
+
+  /*Signal *s1 = get_audio_buffer("../palmas/palma_1.wav");
+  Signal *s2 = get_audio_buffer("440.wav");
+  get_length_min(signal_audio, s1);
+  float test = calculate_covariance(signal_audio, s1);
+  float test_1 = calculate_covariance(signal_audio, signal_audio);
+  float test_2 = calculate_covariance(s1, s1);
+  printf("%f %f %f\n", test_1, test_2, test);*/
+
+  printf("\n440: %f\n", test_signals(signal_audio, get_audio_buffer("440.wav")));
   printf("\npalma 1: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/palma_1.wav")));
   printf("\npalma 2: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/palma_2.wav")));
   printf("\npalma 3: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/palma_4.wav")));
@@ -348,10 +364,6 @@ int main() {
   printf("\nruido 3: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_8.wav")));
   printf("\nruido 4: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_9.wav")));
   printf("\nruido 5: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_10.wav")));
-  printf("\nruido 6: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_11.wav")));
-  printf("\nruido 7: %f\n", test_signals(signal_audio, get_audio_buffer("../pindi_noise_12.wav")));
-
-
 
   return 0;
 }

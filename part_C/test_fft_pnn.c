@@ -168,6 +168,7 @@ float calculate_covariance(Signal *bufferX, Signal *bufferY){
     float covariance = 0;
     for (i = 0; i < bufferX->size; ++i){
         covariance = covariance + (bufferX->data[i] - meanX)*(bufferY->data[i] - meanY);
+        //printf("\n%f\n", covariance);
     }
     //printf("\n%f\n", covariance);
     return covariance;
@@ -180,7 +181,7 @@ float calculate_correlation_pearson(Signal *bufferX, Signal *bufferY){
     //printf("\n%f\n", standart_deviationY);
     float correlation = calculate_covariance(bufferX, bufferY);
     float normalization_part = standart_deviationX*standart_deviationY;
-    correlation = correlation/normalization_part;
+    correlation = (correlation*1000000)/normalization_part;
     //printf("\ncorrelation: %f\n", correlation);
     return correlation;
 }
@@ -223,58 +224,87 @@ int main(int argc, char *argv[]){
 
     //printf("\n%f\n", calculate_correlation_pearson(fft_audio, fft_audio));
 
+
 	// --------------- TESTE PALMA --------------------
 	// Palma 1
-	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../palmas/palma_2.wav"));
+	printf("palma 1:\n%f\n", test_signals("../palmas/palma_1.wav", "../palmas/palma_2.wav"));
 	// Palma 2
-	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../palmas/palma_4.wav"));
+	printf("palma 2:\n%f\n", test_signals("../palmas/palma_1.wav", "../palmas/palma_4.wav"));
 	// --------------- ESTALO --------------------
 	// Estalo 1
-	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../palmas/palma_3.wav"));
+	printf("estalo 3:\n%f\n", test_signals("../palmas/palma_1.wav", "../palmas/palma_3.wav"));
 	// Estalo 2
-	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../palmas/estalo_2.wav"));
+	printf("estalo 4:\n%f\n", test_signals("../palmas/palma_1.wav", "../palmas/estalo_2.wav"));
 	// --------------- RUIDO --------------------
 	// Ruido 1
-	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_2.wav"));
+	printf("ruido 5:\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_2.wav"));
 	// Ruido 2
-	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_4.wav"));
+	printf("ruido 6:\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_4.wav"));
 	// Ruido 3
-	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_8.wav"));
+	printf("ruido 7:\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_8.wav"));
 	// Ruido 4
-	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_9.wav"));
+	printf("ruido 8:\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_9.wav"));
 	// Ruido 5
-	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_10.wav"));
-	// Ruido 6
-	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_11.wav"));
-	// Ruido 7
-	printf("\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_12.wav"));
+	printf("ruido 9:\n%f\n", test_signals("../palmas/palma_1.wav", "../pindi_noise_10.wav"));
 
 	printf("%s\n","---------------------------------");
 	// --------------- TESTE ESTALO --------------------
 	// Palma 1
-	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../palmas/palma_2.wav"));
+	printf("palma 1: \n%f\n", test_signals("../palmas/estalo_3.wav", "../palmas/palma_2.wav"));
 	// Palma 2
-	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../palmas/palma_4.wav"));
+	printf("palma 2: \n%f\n", test_signals("../palmas/estalo_3.wav", "../palmas/palma_4.wav"));
 	// --------------- ESTALO --------------------
 	// Estalo 1
-	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../palmas/palma_3.wav"));
+	printf("estalo 1: \n%f\n", test_signals("../palmas/estalo_3.wav", "../palmas/palma_3.wav"));
 	// Estalo 2
-	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../palmas/estalo_2.wav"));
+	printf("estalo 2: \n%f\n", test_signals("../palmas/estalo_3.wav", "../palmas/estalo_2.wav"));
 	// --------------- RUIDO --------------------
 	// Ruido 1
-	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_2.wav"));
+	printf("ruido 1:\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_2.wav"));
 	// Ruido 2
-	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_4.wav"));
+	printf("ruido 2:\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_4.wav"));
 	// Ruido 3
-	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_8.wav"));
+	printf("ruido 3:\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_8.wav"));
 	// Ruido 4
-	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_9.wav"));
+	printf("ruido 4:\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_9.wav"));
 	// Ruido 5
-	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_10.wav"));
-	// Ruido 6
-	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_11.wav"));
-	// Ruido 7
-	printf("\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_12.wav"));
+	printf("ruido 5:\n%f\n", test_signals("../palmas/estalo_3.wav", "../pindi_noise_10.wav"));
+	// --------------- RUIDO --------------------
+	// Ruido 1
+	printf("%s\n","---------------------------------");
+	// --------------- TESTE ESTALO --------------------
+	// Palma 1
+	printf("%s\n","--------------- TESTE PALMA ------------------");
+	//printf("\n%f\n", test_signals("6735/sound.wav", "440.wav"));
+	printf("\n%f\n", test_signals("6735/sound.wav", "../palmas/palma_2.wav"));
+	// Palma 2
+	printf("\n%f\n", test_signals("6735/sound.wav", "../palmas/palma_4.wav"));
+	// --------------- ESTALO --------------------
+	// Estalo 1
+	printf("%s\n","--------------- TESTE ESTALO ------------------");
+	printf("\n%f\n", test_signals("6735/sound.wav", "../palmas/palma_3.wav"));
+	// Estalo 2
+	printf("\n%f\n", test_signals("6735/sound.wav", "../palmas/estalo_2.wav"));
+	// --------------- RUIDO --------------------
+	// Ruido 1
+	printf("%s\n","--------------- TESTE RUIDO ------------------");
+	printf("\n%f\n", test_signals("6735/sound.wav", "../pindi_noise_2.wav"));
+	// Ruido 2
+	printf("\n%f\n", test_signals("6735/sound.wav", "../pindi_noise_4.wav"));
+	// Ruido 3
+	printf("\n%f\n", test_signals("6735/sound.wav", "../pindi_noise_8.wav"));
+	// Ruido 4
+	printf("\n%f\n", test_signals("6735/sound.wav", "../pindi_noise_9.wav"));
+	// Ruido 5
+	printf("\n%f\n", test_signals("6735/sound.wav", "../pindi_noise_10.wav"));
+
+  /*Signal *s1 = get_audio_buffer("../palmas/palma_1.wav");
+  Signal *s2 = get_audio_buffer("440.wav");
+  get_length_min(s2, s1);
+  float test = calculate_covariance(s2, s1);
+  float test_1 = calculate_covariance(s2, s2);
+  float test_2 = calculate_covariance(s1, s1);
+  printf("%f %f %f\n", test_1, test_2, test);*/
 
 	return 0;
 }
