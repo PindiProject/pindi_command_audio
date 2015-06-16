@@ -240,7 +240,7 @@ int main() {
   snd_pcm_uframes_t frames;
   float *buffer;
   int *float_buf;
-  float seconds = 0.0002;
+  float seconds = 0.0025;
   int size = seconds*44100;
   Signal *signal_audio;
   float correlation_440;
@@ -329,7 +329,7 @@ int main() {
     }
 
     //printf("%f\n", sum_energy);
-    if (sum_energy > 5.0){
+    if (sum_energy > 105.0){
       flag_turn = flag_turn*(-1);
       if (flag_turn == 1){
           printf("%s\n", "YEAH YEAH to ligado");
