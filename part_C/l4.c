@@ -240,7 +240,7 @@ int main() {
   snd_pcm_uframes_t frames;
   float *buffer;
   int *float_buf;
-  float seconds = 0.0025;
+  float seconds = 2;
   int size = seconds*44100;
   Signal *signal_audio;
   float correlation_440;
@@ -317,26 +317,48 @@ int main() {
     signal_audio->size = size;
     signal_audio->data = (float *) malloc(size*sizeof(float));
     int i;
-    float sum_energy = 0;
-    for (i = 0; i < size; ++i){
+    int window_small_size = (int) (44100*0.0025);
+    //for (i = 0; i < size; ++i){
       /*if (i+1 < size){
         signal_audio->data[i] = (buffer[i] + buffer[i+1])/2;
       }
       else{
         signal_audio->data[i] = buffer[i];
       }*/
-      sum_energy = sum_energy + sqrt(buffer[i]*buffer[i]);
+      //sum_energy = sum_energy + sqrt(buffer[i]*buffer[i]);
+    //}
+
+    int slot;
+    int slot_small;
+    float sum_energy = 0;
+    for(slot = 0; slot < size; slot = slot + window_small_size){
+      sum_energy = 0;
+      for (slot_small = slot; slot_small < slot + window_small_size && 
+        slot_small < size; ++slot_small){
+        sum_energy = sum_energy + sqrt(buffer[slot_small]*buffer[slot_small]);
+      }
+      if (sum_energy > 105.0){
+        flag_turn = flag_turn*(-1);
+        if (flag_turn == 1){
+            printf("%s\n", "YEAH YEAH to ligado");
+            break;
+          }else if (flag_turn == -1){
+            printf("%s\n", "Ráa to desligado");
+            break;
+          }
+      }
+      //printf("%f\n", sum_energy);
     }
 
     //printf("%f\n", sum_energy);
-    if (sum_energy > 105.0){
+    /*if (sum_energy > 105.0){
       flag_turn = flag_turn*(-1);
       if (flag_turn == 1){
           printf("%s\n", "YEAH YEAH to ligado");
         }else if (flag_turn == -1){
           printf("%s\n", "Ráa to desligado");
         }
-    }
+    }*/
 
     /*printf("\n440: %f\n", test_signals(signal_audio, get_audio_buffer("440.wav")));
     printf("\npalma 1: %f\n", test_signals(signal_audio, get_audio_buffer("../palmas/palma_1.wav")));
