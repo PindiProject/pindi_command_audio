@@ -1,7 +1,33 @@
 clear('all');
 close 'all';
 
-audio_signal = wavread('palmas/estalo_3.wav');
+%audio_signal = wavread('part_C/6735/sound.wav');
+audio_signal = dlmread('part_C/output','\n');
+% --------------- PALMA --------------------
+% Palma 1
+signal_palma_1 = wavread('part_C/440.wav');
+lengths = [length(signal_palma_1) length(audio_signal)];
+signal_palma_1 = signal_palma_1(1:min(lengths));
+audio_signal_calc = audio_signal(1:min(lengths));
+cepstrum_palma_1 = log(abs(fft(signal_palma_1)));
+cepstrum_audio_signal = log(abs(fft(audio_signal_calc)));
+palma_1 = corrcoef(cepstrum_palma_1, cepstrum_audio_signal);
+palma_1 = abs(palma_1(1,2));
+disp('Palma 1');
+disp(palma_1);
+
+% Palma 1
+signal_palma_1 = wavread('part_C/440.wav');
+lengths = [length(signal_palma_1) length(audio_signal)];
+signal_palma_1 = signal_palma_1(1:min(lengths));
+audio_signal_calc = audio_signal(1:min(lengths));
+cepstrum_palma_1 = log(abs(fft(signal_palma_1)));
+cepstrum_audio_signal = log(abs(fft(audio_signal_calc)));
+palma_1 = corrcoef(cepstrum_palma_1, cepstrum_audio_signal);
+palma_1 = abs(palma_1(1,2));
+disp('Palma 1');
+disp(palma_1);
+
 % --------------- PALMA --------------------
 % Palma 1
 signal_palma_1 = wavread('palmas/palma_2.wav');

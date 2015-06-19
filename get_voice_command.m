@@ -145,25 +145,6 @@ function command = get_voice_command(audio_signal)
 	noise_10 = corrcoef(cepstrum_pindi_noise_10, cepstrum_audio_signal);
 	noise_10 = abs(noise_10(1,2));
 
-	% Pass to noise 11
-	signal_pindi_noise_11 = wavread('pindi_noise_11.wav');
-	lengths = [length(signal_pindi_noise_11) length(audio_signal)];
-	signal_pindi_noise_11 = signal_pindi_noise_11(1:min(lengths));
-	audio_signal_calc = audio_signal(1:min(lengths));
-	cepstrum_pindi_noise_11 = log(abs(fft(signal_pindi_noise_11)));
-	cepstrum_audio_signal = log(abs(fft(audio_signal_calc)));
-	noise_11 = corrcoef(cepstrum_pindi_noise_11, cepstrum_audio_signal);
-	noise_11 = abs(noise_11(1,2));
-
-	% Pass to noise 12
-	signal_pindi_noise_12 = wavread('pindi_noise_12.wav');
-	lengths = [length(signal_pindi_noise_12) length(audio_signal)];
-	signal_pindi_noise_12 = signal_pindi_noise_12(1:min(lengths));
-	audio_signal_calc = audio_signal(1:min(lengths));
-	cepstrum_pindi_noise_12 = log(abs(fft(signal_pindi_noise_12)));
-	cepstrum_audio_signal = log(abs(fft(audio_signal_calc)));
-	noise_12 = corrcoef(cepstrum_pindi_noise_12, cepstrum_audio_signal);
-	noise_12 = abs(noise_12(1,2));
 
 	% Pass to noise 13
 	signal_pindi_noise_13 = wavread('pindi_noise_13.wav');
@@ -179,8 +160,7 @@ function command = get_voice_command(audio_signal)
 	commands_ligar = [ligar_1];
 	commands_desligar = [desligar_1 desligar_2 desligar_3];
 	commands_noise = [noise_1 noise_2 noise_3 noise_4 noise_5 ...
-	noise_6 noise_7 noise_8 noise_9 noise_10 noise_11 noise_12 ...
-	noise_13];
+	noise_6 noise_7 noise_8 noise_9 noise_10];
 	commands = [max(commands_ligar) max(commands_desligar) max(commands_noise)];
 
 	command = 999;
